@@ -4,10 +4,14 @@
 import github3 as github
 import os
 import argparse
+import csv
 import time
 import feedparser
 from copy import copy
+from contextlib import nullcontext
 from sys import stderr, prefix
+
+__version__ = '0.1.1'
 
 gh_user = os.getenv('GH_USER', None)
 gh_pass = os.getenv('GH_PWD', None)
@@ -93,7 +97,7 @@ def search(repo_to_search=None,
                 gh_dorks_file = filename
                 break
 
-    if not os.path.isfile(gh_dorks_file):
+    if gh_dorks_file is None or not os.path.isfile(gh_dorks_file):
         raise Exception('Error, the dorks file path is not valid')
     if user_to_search:
         print("Scanning User: ", user_to_search)
@@ -101,14 +105,20 @@ def search(repo_to_search=None,
         print("Scanning Repo: ", repo_to_search)
     found = False
 
-    outputFile = None
-    if output_filename:
-        outputFile = open(output_filename, 'w')
+    output_context = (
+        open(output_filename, 'w', newline='', encoding='utf-8')
+        if output_filename else nullcontext(None)
+    )
 
-    with open(gh_dorks_file, 'r') as dork_file:
+    with open(gh_dorks_file, 'r', encoding='utf-8') as dork_file, output_context as output_file:
         # Write CSV Header
-        if outputFile:
-            outputFile.write('Issue Type (Dork), Text Matches, File Path, Score/Relevance, URL of File\n')
+        csv_writer = None
+        if output_file:
+            csv_writer = csv.writer(output_file)
+            csv_writer.writerow([
+                'Issue Type (Dork)', 'Text Matches', 'File Path',
+                'Score/Relevance', 'URL of File'
+            ])
         for dork in dork_file:
             dork = dork.strip()
             if not dork or dork[0] in '#;':
@@ -133,8 +143,11 @@ def search(repo_to_search=None,
                     }
 
                     # Either write to file or print output
-                    if outputFile:
-                        outputFile.write('{dork}, {text_matches}, {path}, {score}, {url}\n'.format(**fmt_args))
+                    if csv_writer:
+                        csv_writer.writerow([
+                            fmt_args['dork'], fmt_args['text_matches'],
+                            fmt_args['path'], fmt_args['score'], fmt_args['url']
+                        ])
                     else:
                         result = '\n'.join([
                             'Found result for {dork}',
@@ -161,7 +174,7 @@ def main():
         epilog='Use responsibly, Enjoy pentesting')
 
     parser.add_argument(
-        '-v', '--version', action='version', version='%(prog)s 0.1.1')
+        '-v', '--version', action='version', version='%(prog)s ' + __version__)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(

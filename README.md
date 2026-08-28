@@ -1,6 +1,6 @@
 [![Docker Build & Test](https://github.com/techgaun/github-dorks/actions/workflows/docker-build.yml/badge.svg)](https://github.com/techgaun/github-dorks/actions/workflows/docker-build.yml)
 
-# Github Dorks
+# GitHub Dorks
 
 [Github Search](https://github.com/search) is a quite powerful and useful feature that can be used to search for sensitive data on repositories. Collection of Github dorks can reveal sensitive personal and/or organizational information such as private keys, credentials, authentication tokens, etc. This list is supposed to be useful for assessing security and performing pen-testing of systems.
 
@@ -61,10 +61,20 @@ GH_TOKEN=<github_token> github-dork.py -u dev-nepal              # search using 
 GH_URL=https://github.example.com github-dork.py -u dev-nepal    # search a GitHub Enterprise instance
 ```
 
+### Development
+
+Run the dependency-free unit test suite with:
+
+```shell
+python -m unittest discover -s tests -v
+```
+
+The CI test matrix covers Python 3.10 through 3.13.
+
 ### Limitations
 
 - Authenticated requests get a higher rate limit. But, since this tool waits for the api rate limit to be reset (which is usually less than a minute), it can be slightly slow.
-- Output formatting is not great. PR welcome
+- Search results can be printed to the terminal or written as CSV.
 - ~~Handle rate limit and retry. PR welcome~~
 
 ### Contribution
