@@ -90,5 +90,38 @@ class SearchTests(unittest.TestCase):
             github_dork.search(gh_dorks_file='/does/not/exist')
 
 
+class DorkDictionaryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        dictionary = Path(__file__).parents[1] / 'github-dorks.txt'
+        cls.lines = dictionary.read_text(encoding='utf-8').splitlines()
+        cls.dorks = [
+            line for line in cls.lines
+            if line and not line.startswith(('#', ';'))
+        ]
+
+    def test_has_no_duplicate_dorks(self):
+        duplicates = sorted({dork for dork in self.dorks if self.dorks.count(dork) > 1})
+        self.assertEqual(duplicates, [])
+
+    def test_has_no_surrounding_whitespace(self):
+        untrimmed = [line for line in self.lines if line != line.strip()]
+        self.assertEqual(untrimmed, [])
+
+    def test_has_balanced_quotes(self):
+        malformed = [dork for dork in self.dorks if dork.count('"') % 2]
+        self.assertEqual(malformed, [])
+
+    def test_contains_modern_credential_families(self):
+        dictionary = '\n'.join(self.dorks)
+        for marker in (
+            'github_pat_', 'glpat-', 'pypi-', 'OPENAI_API_KEY',
+            'ANTHROPIC_API_KEY', 'HF_TOKEN', 'CLOUDFLARE_API_TOKEN',
+            'SUPABASE_SERVICE_ROLE_KEY', 'sk_live_',
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, dictionary)
+
+
 if __name__ == '__main__':
     unittest.main()
