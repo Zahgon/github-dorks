@@ -80,10 +80,17 @@ The CI test matrix covers Python 3.10 through 3.13.
 ### Contribution
 
 Please consider contributing dorks that can reveal potentially sensitive information on Github.
+Documented sources for newer credential families are maintained in
+[docs/dork-sources.md](docs/dork-sources.md).
 
 ### List of Dorks
 
-I am not categorizing at the moment. Instead, I am going to just the list of dorks with a description. Many of the dorks can be modified to make the search more specific or generic. You can see more options [here](https://github.com/search#search_cheatsheet_pane).
+The canonical, categorized dictionary is [github-dorks.txt](github-dorks.txt).
+The table below provides descriptions for many established patterns; newer
+credential families and their vendor references are tracked in
+[docs/dork-sources.md](docs/dork-sources.md). Many dorks can be modified to make
+the search more specific or generic. You can see more options
+[here](https://docs.github.com/en/search-github/github-code-search/understanding-github-code-search-syntax).
 
  Dork                                           | Description
 ------------------------------------------------|--------------------------------------------------------------------------
