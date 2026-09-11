@@ -1,21 +1,21 @@
-FROM python:3.12-slim
+FROM node:22-slim
 
 # Set working directory
 WORKDIR /app
 
 # Copy only the files needed to install and run the project
-COPY github-dork.py /app/
+COPY src /app/src/
+COPY bin /app/bin/
 COPY github-dorks.txt /app/
-COPY setup.py /app/
+COPY package.json /app/
 COPY README.md /app/
 
-RUN pip install --no-cache-dir .
+RUN npm install --omit=dev --no-audit --no-fund && npm link
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONIOENCODING=UTF-8
+ENV NODE_ENV=production
 
 # Create volume for potential output files
 VOLUME ["/app/output"]
 
-ENTRYPOINT ["python", "github-dork.py"]
+ENTRYPOINT ["node", "bin/github-dork.js"]

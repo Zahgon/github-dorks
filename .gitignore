@@ -5,3 +5,10 @@ __pycache__/
 dist/
 build/
 *.egg-info/
+
+# Task scaffolding artifacts (not part of the repo)
+golden.patch
+test.patch
+truth.md
+instruction.md
+fix.patch

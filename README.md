@@ -6,17 +6,24 @@
 
 ## GitHub Dork Search Tool
 
-[github-dork.py](github-dork.py) is a simple python tool that can search through your repository or your organization/user repositories. It's not a perfect tool at the moment but provides basic functionality to automate the search on your repositories against the dorks specified in the text file.
+[src/github-dork.js](src/github-dork.js) is a simple JavaScript tool that can search through your repository or your organization/user repositories. It's not a perfect tool at the moment but provides basic functionality to automate the search on your repositories against the dorks specified in the text file.
+
+This is a JavaScript port of the original Python tool. The port's correspondence
+with the original, and the places where the shape had to change, are documented
+in [MIGRATION.md](MIGRATION.md).
 
 ### Installation
 
-This tool uses [github3.py](https://github.com/sigmavirus24/github3.py) to talk with GitHub Search API.
+This tool talks to the GitHub Search API through [src/github3.js](src/github3.js),
+a port of the surface the original used [github3.py](https://github.com/sigmavirus24/github3.py) for.
 
 Clone this repository and run:
 
 ```shell
-pip install .
+npm install -g .
 ```
+
+Node 18 or newer. The package declares no runtime dependencies.
 
 ### Docker Installation
 
@@ -48,17 +55,23 @@ GH_URL   - Environment variable to specify GitHub Enterprise base URL
 Some example usages are listed below:
 
 ```shell
-github-dork.py -r techgaun/github-dorks                          # search a single repo
+github-dork -r techgaun/github-dorks                          # search a single repo
 
-github-dork.py -u techgaun                                       # search all repos of a user
+github-dork -u techgaun                                       # search all repos of a user
 
-github-dork.py -u dev-nepal                                      # search all repos of an organization
+github-dork -u dev-nepal                                      # search all repos of an organization
 
-GH_USER=techgaun GH_PWD=<mypass> github-dork.py -u dev-nepal     # search as authenticated user
+GH_USER=techgaun GH_PWD=<mypass> github-dork -u dev-nepal     # search as authenticated user
 
-GH_TOKEN=<github_token> github-dork.py -u dev-nepal              # search using auth token
+GH_TOKEN=<github_token> github-dork -u dev-nepal              # search using auth token
 
-GH_URL=https://github.example.com github-dork.py -u dev-nepal    # search a GitHub Enterprise instance
+GH_URL=https://github.example.com github-dork -u dev-nepal    # search a GitHub Enterprise instance
+```
+
+Without installing, the same entry point runs from the checkout:
+
+```shell
+node bin/github-dork.js -u techgaun
 ```
 
 ### Development
@@ -66,10 +79,69 @@ GH_URL=https://github.example.com github-dork.py -u dev-nepal    # search a GitH
 Run the dependency-free unit test suite with:
 
 ```shell
-python -m unittest discover -s tests -v
+npm test
 ```
 
-The CI test matrix covers Python 3.10 through 3.13.
+The CI test matrix covers Node 18, 20, 22 and 24.
+
+### Layout
+
+The original was one script plus its test file. The port splits the tool from
+the language and library behaviour it relied on, so that each piece can be
+checked against the original on its own.
+
+| File | What it holds |
+|---|---|
+| [src/github-dork.js](src/github-dork.js) | The tool: `searchWrapper`, `metasearch`, `monit`, `search`, `main` |
+| [bin/github-dork.js](bin/github-dork.js) | The script entry point and its exit status |
+| [src/github3.js](src/github3.js) | The `github3.py` surface the tool uses |
+| [src/feedparser.js](src/feedparser.js) | The `feedparser` surface `monit` uses |
+| [src/xmlmini.js](src/xmlmini.js) | The XML reading `feedparser.js` needs and Node does not ship |
+| [src/pycsv.js](src/pycsv.js) | `csv.writer`'s excel dialect, and `csv.reader` for the suite |
+| [src/pystr.js](src/pystr.js) | `str()`, `repr()`, `strip()`, `splitlines()` |
+| [src/pyargparse.js](src/pyargparse.js) | `argparse`, for the parser `main` builds |
+| [src/pytextwrap.js](src/pytextwrap.js) | `textwrap`, which decides where the help text breaks |
+| [src/pyiter.js](src/pyiter.js) | The iterator protocol, `StopIteration` and PEP 479 |
+| [src/pycopy.js](src/pycopy.js) | `copy.copy()`, for the one call `searchWrapper` makes |
+| [src/pyerrors.js](src/pyerrors.js) | The exception types, carrying Python's `str()` |
+| [src/pysys.js](src/pysys.js) | `print` and the two streams |
+| [src/pytime.js](src/pytime.js) | `time.time` and `time.sleep` |
+| [test/github-dork.test.js](test/github-dork.test.js) | The migrated suite, one case per case |
+
+Every rule in those modules was captured by running CPython 3.11 and github3.py
+4.0.1 rather than read off documentation. The capture scripts, and the two
+differential harnesses that compare the port against the original, live in
+`github-dorks-parity-harness/` alongside this repository.
+
+### Names
+
+| Original | Port |
+|---|---|
+| `search_wrapper(gen)` | `searchWrapper(gen)` |
+| `metasearch(...)` | `metasearch({...})` |
+| `monit(...)` | `monit({...})` |
+| `search(...)` | `search({...})` |
+| `main()` | `main({argv, prog})` |
+| `__version__` | `__version__` |
+| module-level `gh`, `gh_user`, `gh_pass`, `gh_token`, `gh_url` | `runtime.gh`, `runtime.gh_user`, `runtime.gh_pass`, `runtime.gh_token`, `runtime.gh_url` |
+
+Python's keyword arguments become a single options object, keeping the parameter
+names, so every call site still names what it passes. `search`, `metasearch` and
+`monit` are `async`, because Node has no synchronous HTTP. Both changes, and why
+`gh` moved onto an object, are in [MIGRATION.md](MIGRATION.md).
+
+### Dependencies
+
+The original declared two runtime dependencies. Neither exists on npm, and both
+are ported here rather than replaced:
+
+| Original dependency | What takes over |
+|---|---|
+| `github3.py==4.0.1` | [src/github3.js](src/github3.js) — construction, `search_code`, `rate_limit`, and the exception hierarchy the search loop distinguishes |
+| `feedparser>=6.0.12,<7` | [src/feedparser.js](src/feedparser.js) — `parse()` and the `FeedParserDict` key aliases `monit` reads through, over [src/xmlmini.js](src/xmlmini.js) |
+
+The port declares no runtime dependencies of its own, so the container builds and
+the suite runs with the network disabled.
 
 ### Limitations
 

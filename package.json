@@ -1,0 +1,43 @@
+{
+  "name": "github-dorks",
+  "version": "0.1.1",
+  "description": "Find leaked secrets via github search.",
+  "license": "Apache-2.0",
+  "author": "Samar Dhwoj Acharya (@techgaun)",
+  "type": "module",
+  "main": "./src/github-dork.js",
+  "exports": {
+    ".": "./src/github-dork.js",
+    "./github3": "./src/github3.js",
+    "./feedparser": "./src/feedparser.js",
+    "./csv": "./src/pycsv.js"
+  },
+  "bin": {
+    "github-dork": "./bin/github-dork.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "github-dorks.txt",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "homepage": "https://github.com/techgaun/github-dorks",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/techgaun/github-dorks.git"
+  },
+  "keywords": [
+    "github",
+    "dorks",
+    "secrets",
+    "pentest",
+    "security"
+  ]
+}
